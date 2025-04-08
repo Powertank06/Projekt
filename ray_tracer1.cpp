@@ -83,9 +83,18 @@ double dot(Vec a, Vec b){
     return a.x*b.x+a.y*b.y+a.z*b.z;
 }
 
-class Sfera{
+class Body{
 public:
     short red,green,blue;
+    Body(): red(0), green(255), blue(0){}
+    Body(short r,short g,short b): red(r),green(g),blue(b){}
+    virtual bool intersect(Ray ray)=0;
+    virtual Point intersection(Ray ray)=0;
+    virtual Ray normal(Point x)=0;
+};
+
+class Sfera: public Body{
+public:
     double r;
     Point s;
     Sfera(Point s, double r): s(s), r(r){
@@ -116,14 +125,38 @@ public:
         z2*=(norma*cos1-y);
         return z2.pointing();
     }
+    Ray normal(Point x){
+        return Ray(s,x);
+    }
 };
+/*
+
+class Plane: public Body{
+public:
+    Ray plane;
+    double 
+    Plane(Ray p, double a, double b): plane(p),a(a),b(b){}
+    //Plane (short r, short g, short b){}
+    Ray normal(Point x){
+        return plane;
+    }
+    bool intersect(Ray ray){
+        double d;
+        Point inter;
+        Vec temp(ray);
+        d=dot(Ray(plane.o,ray.o),plane)/dot(ray,plane);
+        temp*=d;
+        inter=temp.pointing();
+        if(inter.x-plane.o.x<)
+    }
+};*/
 
 class Scena{
 public:
     int xres;
     int yres;
     short rback,gback,bback;
-    vector<Sfera> obiekty;
+    vector<Body*> obiekty;
     double ratio;
     Point sun;
     Ray cam;
@@ -139,13 +172,15 @@ public:
         cam=Ray(Point(0,0,0),1,0,0);
     }
     void add(Sfera a){
-        obiekty.push_back(a);
+        obiekty.push_back(&a);
     }
     void render(){
         ofstream out("image.ppm",ios::out | ios::trunc);
         out<<"P3"<<'\n';
         out<<2*xres<<' '<<2*yres<<'\n'<<255<<'\n';
         //cout<<"test\n";
+        bool test=0;
+        double err=0.000001;
         for(int y=yres;y>=-yres;y--){
             for(int x=xres;x>=-xres;x--){
                 if(x!=0 && y!=0){
@@ -155,18 +190,19 @@ public:
                 Point intersection=cam.o;
                 double mindist=999999;
                 short r,g,b;
-
-                for(auto a: obiekty){
+                Body* ptr=0;
+                for(auto &a: obiekty){
                     //double dist=Vec(cam.o,a.s).norm;
-                    if(a.intersect(ray)){
-                        double dist=Vec(cam.o,a.intersection(ray)).norm;
+                    if(a->intersect(ray)){
+                        double dist=Vec(cam.o,a->intersection(ray)).norm;
                         if(dist<mindist){
                             mindist=dist;
-                            intersection = a.intersection(ray);
+                            intersection = a->intersection(ray);
                             intersects=true;
-                            r=a.red;
-                            g=a.green;
-                            b=a.blue;
+                            r=a->red;
+                            g=a->green;
+                            b=a->blue;
+                            ptr=a;
                         }
                     }
                 }
@@ -175,12 +211,19 @@ public:
                     bool lit=true;
                     double distInter=Vec(sun,intersection).norm;
                     Ray shadow(sun,intersection);
-                    for(auto b: obiekty){
-                        if(b.intersect(shadow) && Vec(sun,b.intersection(shadow)).norm<distInter){
+                    for(auto &b: obiekty){
+                        /*
+                        if(test==0){
+                            cout<<ptr<<" "<<&b<<"\n";
+                            //test=1;
+                        }*/
+
+                        if(b->intersect(shadow) && Vec(sun,b->intersection(shadow)).norm<distInter-err){
                             lit=false;
                             break;
                         }
                     }
+
                     if(lit){
                         /*
                         if(distInter>0.1){
@@ -188,7 +231,10 @@ public:
                             g*=10/(distInter*distInter);
                             b*=10/(distInter*distInter);
                         }*/
-                        out<<r<<' '<<g<<' '<<b<<'\n';
+
+                        Ray shadow2 (intersection,sun);
+                        double k=dot(shadow2,ptr->normal(intersection));
+                        out<<k*r<<' '<<k*g<<' '<<k*b<<'\n';
                     }
                     else{
                         out<<0<<' '<<0<<' '<<0<<'\n';
