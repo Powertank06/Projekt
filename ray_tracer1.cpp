@@ -81,17 +81,21 @@ colour Scena::iter(Ray ray){
         for(auto &b: obiekty){
             if(b->intersect(shadow) && Vec(sun,b->intersection(shadow)).norm<distInter-err && Vec(intersection,b->intersection(shadow)).norm<distInter){
                 lit=false;
+                //cout<<"test1";
                 break;
             }
         }
-        if( (dot(Vec(intersection,sun),ptr->normal(intersection))<0 && dot(Vec(intersection, ray.o),ptr->normal(intersection))>0) || (dot(Vec(intersection,sun),ptr->normal(intersection))>0 && dot(Vec(intersection, ray.o),ptr->normal(intersection))<0) ){
+        if( dot(Vec(intersection,sun),ptr->normal(intersection))*dot(Vec(intersection, ray.o),ptr->normal(intersection))<0){
             lit=false;
+            //cout<<"test";
         }
         //cout<<"test";
         if(lit){
             Ray shadow2 (intersection,sun);
             double k=abs(dot(shadow2,ptr->normal(intersection)));
+            //cout<<ptr->normal(intersection).x<<" "<<ptr->normal(intersection).y<<" "<<ptr->normal(intersection).z<<"\n";
             //cout<<pixel.g<<" ";
+            //cout<<"test3";
             return pixel*=k;
         }
         else{

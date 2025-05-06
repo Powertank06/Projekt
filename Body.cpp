@@ -12,7 +12,7 @@ using namespace std;
 
 #ifndef __Err__
 #define __Err__
-const double err=0.000001;
+const double err=0.00001;
 #endif
 
 struct colour{
@@ -97,6 +97,7 @@ public:
     Plane(Point a, Point b, Point c) : a(a), b(b), c(c)
     {
         normalny = cross(Vec(a, b), Vec(a, c));
+        //cout<< normalny.x<<" "<< normalny.y<<" "<< normalny.z<<"\n";
         normalny.o = a;
     }
     // Plane (short r, short g, short b){}

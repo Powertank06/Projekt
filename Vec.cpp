@@ -7,6 +7,7 @@
 #include <vector>
 #include <fstream>
 #include <random>
+using namespace std;
 
 class Point{
 public:
@@ -87,6 +88,14 @@ public:
     {
         (*this).normalize();
     }
+    Ray(Ray& a){
+        x = a.x;
+        y = a.y;
+        z = a.z;
+        o = a.o;
+        norm=x*x+y*y+z*z;
+        (*this).normalize();
+    }
     Ray(Vec v) : Vec(v)
     {
         (*this).normalize();
@@ -102,6 +111,8 @@ public:
         y = a.y;
         z = a.z;
         o = a.o;
+        norm=x*x+y*y+z*z;
+        cout<<x<<" "<<y<<" "<<z<<"\n";
         (*this).normalize();
         return *this;
     }
