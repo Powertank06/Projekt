@@ -42,12 +42,16 @@ public:
     void add(Body &a){
         obiekty.push_back(&a);
     }
+    void set_bg(colour b){
+        background=b;
+    }
     colour iter(Ray ray);
     void render();
 };
 
 colour Scena::iter(Ray ray){
     if(bounces==max_bounces){
+        cout<<"test\n";
         return colour(0,0,0);
     }
     bounces++;
@@ -78,6 +82,7 @@ colour Scena::iter(Ray ray){
         bool lit=true;
         double distInter=Vec(sun,intersection).norm;
         Ray shadow(sun,intersection);
+        int test;
         for(auto &b: obiekty){
             if(b->intersect(shadow) && Vec(sun,b->intersection(shadow)).norm<distInter-err && Vec(intersection,b->intersection(shadow)).norm<distInter){
                 lit=false;
@@ -85,20 +90,27 @@ colour Scena::iter(Ray ray){
                 break;
             }
         }
-        if( dot(Vec(intersection,sun),ptr->normal(intersection))*dot(Vec(intersection, ray.o),ptr->normal(intersection))<0){
+        if( dot(Vec(intersection,sun),ptr->normal(intersection)) * dot(Vec(intersection, ray.o),ptr->normal(intersection)) < 0){
             lit=false;
-            //cout<<"test";
         }
         //cout<<"test";
         if(lit){
+            Vec v;
+            do{
+                v=random_vec();
+            }while(v.norm>1 || v.norm==0);
+            v.normalize();
+            Vec v2=ptr->normal(intersection);
+            v2+=v;
+            colour out=iter(Ray(v2));
             Ray shadow2 (intersection,sun);
-            double k=abs(dot(shadow2,ptr->normal(intersection)));
-            //cout<<ptr->normal(intersection).x<<" "<<ptr->normal(intersection).y<<" "<<ptr->normal(intersection).z<<"\n";
-            //cout<<pixel.g<<" ";
-            //cout<<"test3";
-            return pixel*=k;
+            double k=abs(dot(shadow2,ptr->normal(intersection)))-err;
+            pixel*=k;
+            return colour( frac(ptr->col.r)*out.r,frac(ptr->col.g)*out.g,frac(ptr->col.b)*out.b )+pixel;
+            //return colour(255,0,0);          
         }
         else{
+            //cout<<"test\n";
             Vec v;
             do{
                 v=random_vec();
@@ -108,6 +120,7 @@ colour Scena::iter(Ray ray){
             v2+=v;
             colour out=iter(Ray(v2));
             return colour( frac(ptr->col.r)*out.r,frac(ptr->col.g)*out.g,frac(ptr->col.b)*out.b );
+            //return colour(0,0,255);
         }
     }
     else{
@@ -138,16 +151,17 @@ void Scena::render(){
 
 int main(){
     Sfera s1(Point(3,-1,0),1);
-    Sfera s2(Point(4,0,0),2);
+    Sfera s2(Point(0,0,-55),50,colour(70,70,70));
     Sfera s3(Point(2,1,0),0.2);
-    Plane p1(Point(1.5,0,-1),Point(6,3,-1),Point(6,-3,-1));
+    Plane p1(Point(1.5,1,-1),Point(6,5,-1),Point(6,-2,-1));
     Scena scena;
     scena.add(s1);
-    //scena.add(s2);
-    //scena.add(s3);
+    scena.add(s2);
+    scena.add(s3);
     scena.add(p1);
     //Ray ray(Point(0,0,0),1,0,-1);
     //cout<<p1.intersect(ray)<<"\n";
     //cout<<p1.intersection(ray).x<<" "<<p1.intersection(ray).y<<" "<<p1.intersection(ray).z;
+    scena.set_bg(colour(120,120,230));
     scena.render();
 }

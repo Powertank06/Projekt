@@ -76,8 +76,8 @@ public:
 };
 
 Vec random_vec(){
-    std::default_random_engine generator;
-    std::uniform_real_distribution<double> distribution(0, 1);
+    static std::uniform_real_distribution<double> distribution(-1.0, 1.0);
+    static std::mt19937 generator;
     return Vec(Point(0, 0, 0), distribution(generator), distribution(generator), distribution(generator));
 }
 
@@ -93,7 +93,7 @@ public:
         y = a.y;
         z = a.z;
         o = a.o;
-        norm=x*x+y*y+z*z;
+        norm=sqrt(x*x+y*y+z*z);
         (*this).normalize();
     }
     Ray(Vec v) : Vec(v)
@@ -111,8 +111,8 @@ public:
         y = a.y;
         z = a.z;
         o = a.o;
-        norm=x*x+y*y+z*z;
-        cout<<x<<" "<<y<<" "<<z<<"\n";
+        norm=sqrt(x*x+y*y+z*z);
+        //cout<<x<<" "<<y<<" "<<z<<"\n";
         (*this).normalize();
         return *this;
     }

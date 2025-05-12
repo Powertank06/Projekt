@@ -12,7 +12,7 @@ using namespace std;
 
 #ifndef __Err__
 #define __Err__
-const double err=0.00001;
+const double err=0.000001;
 #endif
 
 struct colour{
@@ -25,7 +25,14 @@ struct colour{
         r*=x;
         g*=x;
         b*=x;
+        r=min(short(255),r);
+        g=min(short(255),g);
+        b=min(short(255),b);
         return *this;
+    }
+    colour operator+ (colour& a){
+        colour y(min(r+a.r,255),min(g+a.g,255),min(b+a.b,255));
+        return y;
     }
 };
 
@@ -34,7 +41,7 @@ class Body
 public:
     colour col;
     Body() : col(0, 255, 0) {}
-    Body(short r, short g, short b) : col(r, g, b) {}
+    Body(colour c) : col(c) {}
     virtual bool intersect(Ray ray) = 0;
     virtual Point intersection(Ray ray) = 0;
     virtual Ray normal(Point x) = 0;
@@ -45,12 +52,8 @@ class Sfera : public Body
 public:
     double r;
     Point s;
-    Sfera(Point s, double r) : s(s), r(r)
-    {
-        col.r = 0;
-        col.g = 255;
-        col.b = 0;
-    }
+    Sfera(Point s, double r) : s(s), r(r){}
+    Sfera(Point s, double r, colour c) : Body(c), s(s), r(r){}
     bool intersect(Ray ray) override;
     Point intersection(Ray ray) override;
     Ray normal(Point x)
@@ -62,6 +65,7 @@ public:
 bool Sfera::intersect(Ray ray)
 {
     Vec dir(ray.o, s);
+    if(dot(dir,ray)<0) return false;
     double norma = dir.norm;
     dir.normalize();
     double cos = dot(ray, dir);
