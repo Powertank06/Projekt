@@ -34,6 +34,12 @@ struct colour{
         colour y(min(r+a.r,255),min(g+a.g,255),min(b+a.b,255));
         return y;
     }
+    friend colour operator/(colour& a, int b){
+        a.r/=b;
+        a.g/=b;
+        a.b/=b;
+        return a;
+    }
 };
 
 class Body

@@ -18,6 +18,8 @@ double frac(short col){
 }
 
 class Scena{
+    Ray make_ray(int x, int y);
+    int samples=5;
 public:
     int xres;
     int yres;
@@ -49,9 +51,18 @@ public:
     void render();
 };
 
+Ray Scena::make_ray (int x, int y){
+    static std::uniform_real_distribution<double> distribution(0, 1.0);
+    static std::mt19937 generator;
+    double a=distribution(generator);
+    double b=distribution(generator);
+    //cout<<x+a-0.5<<" "<<y+b-0.5<<"\n";
+    return Ray(cam.o,1,ratio*(x+a-0.5)/xres,ratio*(y+b-0.5)/xres);
+}
+
 colour Scena::iter(Ray ray){
     if(bounces==max_bounces){
-        cout<<"test\n";
+        //cout<<"test\n";
         return colour(0,0,0);
     }
     bounces++;
@@ -137,10 +148,16 @@ void Scena::render(){
     for(int y=yres;y>=-yres;y--){
         for(int x=xres;x>=-xres;x--){
             if(x!=0 && y!=0){
-            Ray ray(cam.o,1,ratio*x/xres,ratio*y/xres);
+            //Ray ray(cam.o,1,ratio*x/xres,ratio*y/xres);
             //cout<<ray.pointing().x<<" "<<ray.pointing().y<<" "<<ray.pointing().z<<"\n";
-            bounces=0;
-            colour pixel=this->iter(ray);
+            colour pixel;
+            for(int i=0;i<samples;i++){
+                bounces=0;
+                colour temp=this->iter(make_ray(x,y));
+                temp=temp/5;
+                pixel=pixel+temp;
+            }
+            //pixel=pixel/samples;
             //if(pixel.r==0) cout<<"test5";
             out<<pixel.r<<' '<<pixel.g<<' '<<pixel.b<<'\n';
             }
