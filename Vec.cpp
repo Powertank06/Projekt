@@ -72,7 +72,18 @@ public:
         z *= n;
         return *this;
     }
-    // friend Vec operator+(Vec a, Vec b);
+    
+    friend Vec operator*(double n,Vec a)
+    {
+        Vec c=a;
+        c*=n;
+        return c;
+    }
+    friend Vec operator+(Vec a, Vec b){
+        Vec c=a;
+        c+=b;
+        return c;
+    }
 };
 
 Vec random_vec(){
@@ -116,6 +127,7 @@ public:
         (*this).normalize();
         return *this;
     }
+    //friend Vec operator*(double n, Vec a);
 };
 
 double dot(Vec a, Vec b){

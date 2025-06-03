@@ -20,6 +20,8 @@ double frac(short col){
 class Scena{
     Ray make_ray(int x, int y);
     int samples=5;
+    void ray_intersections(Point& intersection, bool& intersects, Body*& ptr, colour& pixel, Ray ray);
+    static double reflectance(double ior, double cos);
 public:
     int xres;
     int yres;
@@ -51,6 +53,12 @@ public:
     void render();
 };
 
+double Scena::reflectance(double ior, double cos){
+    double r0=(1-ior)/(1+ior);
+    r0*=r0;
+    return r0+(1-r0)*std::pow((1-cos),5);
+}
+
 Ray Scena::make_ray (int x, int y){
     static std::uniform_real_distribution<double> distribution(0, 1.0);
     static std::mt19937 generator;
@@ -60,17 +68,9 @@ Ray Scena::make_ray (int x, int y){
     return Ray(cam.o,1,ratio*(x+a-0.5)/xres,ratio*(y+b-0.5)/xres);
 }
 
-colour Scena::iter(Ray ray){
-    if(bounces==max_bounces){
-        //cout<<"test\n";
-        return colour(0,0,0);
-    }
-    bounces++;
-    bool intersects=false;
-    Point intersection=ray.o;
+void Scena::ray_intersections(Point& intersection, bool& intersects, Body*& ptr, colour& pixel, Ray ray){
+    intersection=ray.o;
     double mindist=999999;
-    colour pixel;
-    Body* ptr=0;
     for(auto &a: obiekty){
         //cout<<"test ";
         //double dist=Vec(cam.o,a.s).norm;
@@ -86,10 +86,41 @@ colour Scena::iter(Ray ray){
             }
         }
     }
+}
+
+colour Scena::iter(Ray ray){
+    if(bounces==max_bounces){
+        //cout<<"test\n";
+        return colour(0,0,0);
+    }
+    bounces++;
+    bool intersects=false;
+    Point intersection;
+    colour pixel;
+    Body* ptr=0;
+    ray_intersections(intersection, intersects, ptr, pixel, ray);
     //cout<<intersects;
     
     if(intersects){
-        //cout<<"test3";
+        Ray N=ptr->normal(intersection);
+        if(ptr->reflect==1){
+            static std::uniform_real_distribution<double> distribution(0, 1.0);
+            static std::mt19937 generator;
+            double a=distribution(generator);
+            double ior = ptr->inner(ray,intersection)? (1-ptr->ior) : ptr->ior;
+            if(a<reflectance(ior,-dot(ray,N)) || ior*sqrt(1-dot(ray,N)*dot(ray,N)>1-err)){
+                Ray refl=ray+(-2*dot(ray,ptr->normal(intersection)))*N;
+                refl.o=intersection;
+                return iter(refl);
+            }
+            else{
+                //Ray ep=(-dot(N,ray))*N+ray;
+                Vec p=ior*(ray+(-dot(ray,N)*N));
+                Vec r=(-sqrt(1-dot(p,p)))*N;
+                Ray out=p+r;
+                return iter(out);
+            }
+        }
         bool lit=true;
         double distInter=Vec(sun,intersection).norm;
         Ray shadow(sun,intersection);
@@ -101,7 +132,7 @@ colour Scena::iter(Ray ray){
                 break;
             }
         }
-        if( dot(Vec(intersection,sun),ptr->normal(intersection)) * dot(Vec(intersection, ray.o),ptr->normal(intersection)) < 0){
+        if( dot(Vec(intersection,sun),N) * dot(Vec(intersection, ray.o),N) < 0){
             lit=false;
         }
         //cout<<"test";
@@ -154,7 +185,7 @@ void Scena::render(){
             for(int i=0;i<samples;i++){
                 bounces=0;
                 colour temp=this->iter(make_ray(x,y));
-                temp=temp/5;
+                temp=temp/samples;
                 pixel=pixel+temp;
             }
             //pixel=pixel/samples;
@@ -168,13 +199,16 @@ void Scena::render(){
 
 int main(){
     Sfera s1(Point(3,-1,0),1);
-    Sfera s2(Point(0,0,-55),50,colour(70,70,70));
-    Sfera s3(Point(2,1,0),0.2);
+    Sfera s2(Point(0,0,-55),50,colour(70,70,70),0,0);
+    Sfera s3(Point(4,3,0),0.2);
+    Sfera s4(Point(1,0,0),0.4,colour(100,100,100),1,1.4);
     Plane p1(Point(1.5,1,-1),Point(6,5,-1),Point(6,-2,-1));
+    p1.reflect=1;
     Scena scena;
     scena.add(s1);
     scena.add(s2);
     scena.add(s3);
+    scena.add(s4);
     scena.add(p1);
     //Ray ray(Point(0,0,0),1,0,-1);
     //cout<<p1.intersect(ray)<<"\n";

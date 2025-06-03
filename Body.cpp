@@ -46,11 +46,14 @@ class Body
 {
 public:
     colour col;
-    Body() : col(0, 255, 0) {}
-    Body(colour c) : col(c) {}
+    double reflect;
+    double ior;
+    Body() : col(0, 255, 0),reflect(0) {}
+    Body(colour c,double reflect_,double ior_) : col(c),reflect(reflect_),ior(ior_) {}
     virtual bool intersect(Ray ray) = 0;
     virtual Point intersection(Ray ray) = 0;
     virtual Ray normal(Point x) = 0;
+    virtual bool inner(Ray ray, Point p) = 0;
 };
 
 class Sfera : public Body
@@ -59,13 +62,14 @@ public:
     double r;
     Point s;
     Sfera(Point s, double r) : s(s), r(r){}
-    Sfera(Point s, double r, colour c) : Body(c), s(s), r(r){}
+    Sfera(Point s, double r, colour c, double reflect_, double(ior_)) : Body(c,reflect_,ior_), s(s), r(r){}
     bool intersect(Ray ray) override;
     Point intersection(Ray ray) override;
     Ray normal(Point x)
     {
         return Ray(s, x);
     }
+    bool inner(Ray ray, Point p) override;
 };
 
 bool Sfera::intersect(Ray ray)
@@ -97,6 +101,11 @@ Point Sfera::intersection(Ray ray)
     return z2.pointing();
 }
 
+bool Sfera::inner(Ray ray, Point p){
+    if(dot(ray,this->normal(p))>0) return true;
+    return false;
+}
+
 class Plane : public Body
 {
     Point inter;
@@ -119,6 +128,9 @@ public:
     Point intersection(Ray ray) override
     {
         return inter;
+    }
+    bool inner(Ray r,Point p) override{ //dopracować
+        return false;
     }
 };
 
